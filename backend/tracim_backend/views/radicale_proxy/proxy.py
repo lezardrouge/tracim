@@ -10,7 +10,9 @@ from tracim_backend.lib.calendar.radicale import RadicaleApi
 from tracim_backend.lib.calendar.determiner import CaldavAuthorizationDeterminer
 from tracim_backend.lib.proxy.proxy import Proxy
 from tracim_backend.lib.utils.authorization import check_right, \
-    is_user, is_reader, can_access_workspace_calendar, can_access_user_calendar, \
+    is_user, is_reader
+from tracim_backend.lib.calendar.authorization import \
+    can_access_workspace_calendar, can_access_user_calendar, \
     can_access_to_calendar_list
 from tracim_backend.lib.utils.request import TracimRequest
 from tracim_backend.views.controllers import Controller

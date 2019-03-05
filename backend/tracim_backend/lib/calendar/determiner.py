@@ -1,7 +1,7 @@
 # coding: utf-8
 import typing
 
-from tracim_backend.lib.calendar.authorization import DavAuthorization
+from tracim_backend.lib.calendar.utils import DavAuthorization
 from tracim_backend.lib.utils.logger import logger
 
 if typing.TYPE_CHECKING:

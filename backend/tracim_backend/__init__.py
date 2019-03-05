@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 from pyramid_multiauth import MultiAuthenticationPolicy
-from tracim_backend.lib.calendar.authorization import PyramidContext, \
-    add_special_header_for_caldav
+from tracim_backend.lib.calendar.authorization import add_www_authenticate_header_for_caldav
 from tracim_backend.views.core_api.account_controller import AccountController
 from tracim_backend.views.radicale_proxy.proxy import RadicaleProxyController
 
@@ -91,7 +90,7 @@ def web(global_config, **local_settings):
         ),
     )
     configurator.include(add_cors_support)
-    configurator.include(add_special_header_for_caldav)
+    configurator.include(add_www_authenticate_header_for_caldav)
     # make sure to add this before other routes to intercept OPTIONS
     configurator.add_cors_preflight_handler()
     # Default authorization : Accept anything.

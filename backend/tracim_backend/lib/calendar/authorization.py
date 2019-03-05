@@ -1,40 +1,83 @@
 # coding: utf-8
-from enum import Enum
 
-from hapic.error.marshmallow import MarshmallowDefaultErrorBuilder
-from hapic.ext.pyramid import PyramidContext
-from pyramid.response import Response
-
-def add_special_header_for_caldav(config):
-    pass
-
-class DavAuthorization(Enum):
-    READ = 'r'
-    WRITE = 'w'
+from pyramid.events import NewResponse
+from tracim_backend import error
+from tracim_backend.exceptions import NotAuthenticated, CaldavNotAuthenticated
+from tracim_backend.lib.calendar.utils import DavAuthorization
+from tracim_backend.lib.utils.request import TracimRequest
+from tracim_backend.lib.calendar.determiner import CaldavAuthorizationDeterminer
+from tracim_backend.lib.utils.authorization import AuthorizationChecker, \
+    is_contributor, is_reader, has_personal_access, is_user
+from tracim_backend.lib.utils.request import TracimContext
 
 
-# class TracimPyramidContext(PyramidContext):
-#     def get_response(
-#         self, response: str, http_code: int, mimetype: str = "application/json"
-#     ) -> Response:
-#         response = super().get_response(response, http_code, mimetype)
-#
-#         # FIXME BS 2018-12-10: This is a hack to be able to add WWW-Authenticate
-#         try:
-#             if response.json['code'] == error.:
-#                 # TODO BS 2018-12-10: Traduce realm
-#                 response.headerlist.append(('WWW-Authenticate', 'Basic realm="Tracim credentials"'))
-#                 return response
-#         except:
-#             pass
-#         return response
+def add_www_authenticate_header_for_caldav(config):
+    config.add_subscriber(
+        add_www_authenticate_header_for_caldav_to_response,
+        NewResponse
+    )
 
 
-# class RadicaleProxyErrorBuilder(MarshmallowDefaultErrorBuilder):
-#     def build_from_exception(
-#         self, exception: Exception, include_traceback: bool = False
-#     ) -> dict:
-#         error_content = super().build_from_exception(exception)
-#         # FIXME BS 2018-12-10: This is a hack to be able to add WWW-Authenticate
-#         error_content['code'] = 4422
-#         return error_content
+def add_www_authenticate_header_for_caldav_to_response(event):
+    """
+    Add WWW-Authenticate header to response in case of CALDAV_NOT_AUTHENTICATED
+    error.
+    """
+    request = event.request
+    response = event.response
+    if request.exception and \
+            request.exception.error_code == error.CALDAV_NOT_AUTHENTICATED:
+        response.headerlist.append(
+            ('WWW-Authenticate', 'Basic realm="Tracim credentials"')
+        )
+
+
+class CanAccessWorkspaceCalendarChecker(AuthorizationChecker):
+    """
+    Check current user have write access on current workspace:
+        - in reading: must be reader
+        - in writing: must be contributor
+    """
+    def __init__(self) -> None:
+        self._authorization = CaldavAuthorizationDeterminer()
+
+    def check(
+            self,
+            tracim_context: "TracimRequest"
+    ) -> bool:
+        """
+        :param tracim_context: Must be a TracimRequest because this checker only
+        work in pyramid http request context.
+        :return: bool
+        """
+        if self._authorization.determine_requested_mode(tracim_context) == \
+                DavAuthorization.WRITE:
+            is_contributor.check(tracim_context)
+        else:
+            is_reader.check(tracim_context)
+
+        return True
+
+
+class CaldavChecker(AuthorizationChecker):
+    """
+    Wrapper for NotAuthenticated case
+    """
+    def __init__(self, checker) -> None:
+        self.checker = checker
+
+    def check(
+        self,
+        tracim_context: TracimContext
+    ):
+        try:
+            return self.checker.check(tracim_context)
+        except NotAuthenticated as exc:
+            raise CaldavNotAuthenticated() from exc
+
+
+can_access_workspace_calendar = CaldavChecker(
+    CanAccessWorkspaceCalendarChecker()
+)
+can_access_user_calendar = CaldavChecker(has_personal_access)
+can_access_to_calendar_list = CaldavChecker(is_user)

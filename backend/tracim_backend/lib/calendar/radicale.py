@@ -2,16 +2,11 @@
 import typing
 
 from pyramid.response import Response
-from tracim_backend.lib.calendar.authorization import DavAuthorization
-from tracim_backend.lib.calendar.determiner import CaldavAuthorizationDeterminer
-
-from tracim_backend.lib.proxy.proxy import Proxy
-
 from sqlalchemy.orm import Session
 
-from tracim_backend.lib.utils.authorization import check_user_calendar_authorization, \
-    can_modify_workspace
-from tracim_backend.lib.utils.request import TracimContext
+from tracim_backend.lib.calendar.determiner import \
+    CaldavAuthorizationDeterminer
+from tracim_backend.lib.proxy.proxy import Proxy
 from tracim_backend.models import User
 from tracim_backend.models.data import Workspace
 
@@ -36,16 +31,12 @@ class RadicaleApi(object):
     def get_remote_user_calendar_response(self, request: 'TracimRequest', user: User) -> Response:
         return self._proxy.get_response_for_request(
             request,
-            # FIXME BS 2018-12-17: /radicale/ must be set because
-            # raidcale will respond url with this path in PROPFIND requests
             'user/{}.ics'.format(user.user_id)
         )
 
     def get_remote_user_calendars_response(self, request: 'TracimRequest') -> Response:
         return self._proxy.get_response_for_request(
             request,
-            # FIXME BS 2018-12-17: /radicale/ must be set because
-            # raidcale will respond url with this path in PROPFIND requests
             'user/',
         )
 
@@ -54,8 +45,6 @@ class RadicaleApi(object):
     ) -> Response:
         return self._proxy.get_response_for_request(
             request,
-            # FIXME BS 2018-12-17: /radicale/ must be set because
-            # raidcale will respond url with this path in PROPFIND requests
             'workspace/{}.ics'.format(workspace.workspace_id),
         )
 
@@ -64,7 +53,5 @@ class RadicaleApi(object):
     ) -> Response:
         return self._proxy.get_response_for_request(
             request,
-            # FIXME BS 2018-12-17: /radicale/ must be set because
-            # raidcale will respond url with this path in PROPFIND requests
             'workspace/',
         )

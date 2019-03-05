@@ -10,8 +10,14 @@ from tracim_backend.lib.utils.request import TracimRequest
 
 
 class Proxy(object):
-    def __init__(self, base_address: str) -> None:
-        self._base_address = base_address
+    def __init__(
+        self,
+        base_address_host: str,
+        base_address_path: str,
+    ) -> None:
+        self._base_address_source = base_address_host
+        self._base_address_path = base_address_path
+        self._base_address = urljoin(self._base_address_source, self._base_address_path)
 
     def get_response_for_request(
         self,

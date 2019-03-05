@@ -27,6 +27,7 @@ from tracim_backend.lib.utils.authorization import TRACIM_DEFAULT_PERM
 from tracim_backend.lib.utils.cors import add_cors_support
 from tracim_backend.lib.webdav import WebdavAppFactory
 from tracim_backend.views import BASE_API_V2
+from tracim_backend.views import CALENDAR_BASE_URL
 from tracim_backend.views.contents_api.html_document_controller import HTMLDocumentController  # nopep8
 from tracim_backend.views.contents_api.threads_controller import ThreadController  # nopep8
 from tracim_backend.views.core_api.session_controller import SessionController
@@ -159,7 +160,7 @@ def web(global_config, **local_settings):
     configurator.include(thread_controller.bind, route_prefix=BASE_API_V2)
     configurator.include(file_controller.bind, route_prefix=BASE_API_V2)
     configurator.include(folder_controller.bind, route_prefix=BASE_API_V2)
-    configurator.include(radicale_proxy_controller.bind)
+    configurator.include(radicale_proxy_controller.bind, route_prefix=CALENDAR_BASE_URL)
     if app_config.FRONTEND_SERVE:
         configurator.include('pyramid_mako')
         frontend_controller = FrontendController(app_config.FRONTEND_DIST_FOLDER_PATH)  # nopep8

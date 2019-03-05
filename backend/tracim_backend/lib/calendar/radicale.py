@@ -18,7 +18,6 @@ from tracim_backend.models.data import Workspace
 if typing.TYPE_CHECKING:
     from tracim_backend import CFG, TracimRequest
 
-
 class RadicaleApi(object):
     def __init__(
         self,
@@ -39,7 +38,7 @@ class RadicaleApi(object):
             request,
             # FIXME BS 2018-12-17: /radicale/ must be set because
             # raidcale will respond url with this path in PROPFIND requests
-            '/radicale/user/{}.ics'.format(
+            'user/{}.ics'.format(
                 str(self._user.user_id),
             ),
         )
@@ -49,7 +48,7 @@ class RadicaleApi(object):
             request,
             # FIXME BS 2018-12-17: /radicale/ must be set because
             # raidcale will respond url with this path in PROPFIND requests
-            '/radicale/user/',
+            'user/',
         )
 
     def get_remote_workspace_calendar_response(
@@ -59,7 +58,7 @@ class RadicaleApi(object):
             request,
             # FIXME BS 2018-12-17: /radicale/ must be set because
             # raidcale will respond url with this path in PROPFIND requests
-            '/radicale/workspace/{}.ics'.format(
+            'workspace/{}.ics'.format(
                 str(workspace.workspace_id),
             ),
         )
@@ -71,5 +70,5 @@ class RadicaleApi(object):
             request,
             # FIXME BS 2018-12-17: /radicale/ must be set because
             # raidcale will respond url with this path in PROPFIND requests
-            '/radicale/workspace/{}.ics',
+            'workspace/{}.ics',
         )

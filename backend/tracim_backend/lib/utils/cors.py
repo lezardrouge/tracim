@@ -107,5 +107,5 @@ def get_cors_headers_to_add(origin: str) -> typing.Dict[str, str]:
         ),
         'Access-Control-Allow-Origin': origin,
         'Access-Control-Allow-Credentials': 'true',
-        'Vary': 'Origin'
+        'Vary': 'Origin',
     }

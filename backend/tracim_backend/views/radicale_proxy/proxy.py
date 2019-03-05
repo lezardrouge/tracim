@@ -4,14 +4,14 @@ from hapic import HapicData
 from pyramid.config import Configurator
 from pyramid.response import Response
 from tracim_backend.extensions import hapic
-from tracim_backend.exceptions import NotAuthorized, InsufficientUserRoleInWorkspace
+from tracim_backend.exceptions import CaldavNotAuthorized, InsufficientUserRoleInWorkspace
 from tracim_backend.exceptions import NotAuthenticated
-from tracim_backend.lib.calendar.authorization import RadicaleProxyErrorBuilder
 from tracim_backend.lib.calendar.radicale import RadicaleApi
 from tracim_backend.lib.calendar.determiner import CaldavAuthorizationDeterminer
 from tracim_backend.lib.proxy.proxy import Proxy
 from tracim_backend.lib.utils.authorization import check_right, \
-    is_user, is_reader, can_access_workspace_calendar
+    is_user, is_reader, can_access_workspace_calendar, can_access_user_calendar, \
+    can_access_to_calendar_list
 from tracim_backend.lib.utils.request import TracimRequest
 from tracim_backend.views.controllers import Controller
 
@@ -37,13 +37,7 @@ class RadicaleProxyController(Controller):
         )
 
     @hapic.with_api_doc(disable_doc=True)
-    @hapic.handle_exception(
-        NotAuthenticated,
-        http_code=401,
-        error_builder=RadicaleProxyErrorBuilder(),
-    )
-    @hapic.handle_exception(NotAuthorized, http_code=403)
-    @check_right(is_user)
+    @check_right(can_access_user_calendar)
     @hapic.input_path(UserCalendarPath())
     def radicale_proxy__user(
         self, context, request: TracimRequest, hapic_data: HapicData,
@@ -58,16 +52,17 @@ class RadicaleProxyController(Controller):
 
         radicale_response = radicale_api.get_remote_user_calendar_response(
             request,
+            request.candidate_user
         )
         return radicale_response
 
     @hapic.with_api_doc(disable_doc=True)
-    @hapic.handle_exception(
-        NotAuthenticated,
-        http_code=401,
-        error_builder=RadicaleProxyErrorBuilder(),
-    )
-    @check_right(is_user)
+    # @hapic.handle_exception(
+    #     NotAuthenticated,
+    #     http_code=401,
+    #     error_builder=RadicaleProxyErrorBuilder(),
+    # )
+    @check_right(can_access_to_calendar_list)
     def radicale_proxy__users(
         self, context, request: TracimRequest,
     ) -> Response:
@@ -85,14 +80,15 @@ class RadicaleProxyController(Controller):
         return radicale_response
 
     @hapic.with_api_doc(disable_doc=True)
-    @hapic.handle_exception(
-        NotAuthenticated,
-        http_code=401,
-        error_builder=RadicaleProxyErrorBuilder(),
-    )
-    @hapic.handle_exception(NotAuthorized, http_code=403)
-    # FIXME BS 2018-12-10: Check it is the raise exception in cas of not workspace write auth
-    @hapic.handle_exception(InsufficientUserRoleInWorkspace, http_code=403)
+    # @hapic.handle_exception(
+    #     NotAuthenticated,
+    #     http_code=401,
+    #     error_builder=RadicaleProxyErrorBuilder(),
+    # )
+    # @hapic.handle_exception(CaldavNotAuthorized, http_code=403)
+    # # FIXME BS 2018-12-10: Check it is the raise exception in cas of not workspace write auth
+    # @hapic.handle_exception(InsufficientUserRoleInWorkspace, http_code=403)
+
     @check_right(can_access_workspace_calendar)
     @hapic.input_path(WorkspaceCalendarPath())
     def radicale_proxy__workspace(
@@ -108,17 +104,18 @@ class RadicaleProxyController(Controller):
 
         radicale_response = radicale_api.get_remote_workspace_calendar_response(
             request,
-            workspace=request.current_workspace,
+            workspace=request.candidate_workspace,
         )
         return radicale_response
 
     @hapic.with_api_doc(disable_doc=True)
-    @hapic.handle_exception(
-        NotAuthenticated,
-        http_code=401,
-        error_builder=RadicaleProxyErrorBuilder(),
-    )
-    @hapic.handle_exception(NotAuthorized, http_code=403)
+    # @hapic.handle_exception(
+    #     NotAuthenticated,
+    #     http_code=401,
+    #     error_builder=RadicaleProxyErrorBuilder(),
+    # )
+    # @hapic.handle_exception(CaldavNotAuthorized, http_code=403)
+    @check_right(can_access_to_calendar_list)
     def radicale_proxy__workspaces(
         self, context, request: TracimRequest,
     ) -> Response:
@@ -141,7 +138,6 @@ class RadicaleProxyController(Controller):
         Create all routes and views using pyramid configurator
         for this controller
         """
-        # FIXME BS 2018-12-17: c le bazar dans les paths
         # Radicale user calendar
         configurator.add_route(
             'radicale_proxy__user',

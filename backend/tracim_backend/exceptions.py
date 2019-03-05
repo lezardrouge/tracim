@@ -77,10 +77,11 @@ class SameValueError(ValueError):
 class NotAuthenticated(TracimException):
     pass
 
+class CaldavNotAuthenticated(NotAuthenticated):
+    error_code = error.CALDAV_NOT_AUTHENTICATED
 
-class NotAuthorized(TracimException):
-    pass
-
+class CaldavNotAuthorized(TracimException):
+    error_code = error.CALDAV_NOT_AUTHORIZED
 
 class WorkspaceNotFound(NotFound):
     error_code = error.WORKSPACE_NOT_FOUND

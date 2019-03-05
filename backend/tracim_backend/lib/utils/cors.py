@@ -8,7 +8,6 @@ import typing
 from pyramid.events import NewResponse
 from tracim_backend.lib.calendar.determiner import CALDAV_WRITE_METHODS, CALDAV_READ_METHODS
 
-
 def add_cors_support(config):
     # INFO - G.M - 17-05-2018 - CORS Preflight stuff (special requests)
     config.add_directive(

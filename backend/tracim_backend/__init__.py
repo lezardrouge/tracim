@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from pyramid_multiauth import MultiAuthenticationPolicy
-from tracim_backend.lib.calendar.authorization import TracimPyramidContext
+from tracim_backend.lib.calendar.authorization import PyramidContext, \
+    add_special_header_for_caldav
 from tracim_backend.views.core_api.account_controller import AccountController
 from tracim_backend.views.radicale_proxy.proxy import RadicaleProxyController
 
@@ -40,7 +41,8 @@ from tracim_backend.views.contents_api.folder_controller import FolderController
 from tracim_backend.views.core_api.reset_password_controller import ResetPasswordController  # nopep8
 from tracim_backend.views.frontend import FrontendController
 from tracim_backend.views.errors import ErrorSchema
-from tracim_backend.exceptions import NotAuthenticated
+from tracim_backend.exceptions import NotAuthenticated, CaldavNotAuthorized, \
+    CaldavNotAuthenticated
 from tracim_backend.exceptions import SameValueError
 from tracim_backend.exceptions import ContentInNotEditableState
 from tracim_backend.exceptions import PageNotFound
@@ -89,6 +91,7 @@ def web(global_config, **local_settings):
         ),
     )
     configurator.include(add_cors_support)
+    configurator.include(add_special_header_for_caldav)
     # make sure to add this before other routes to intercept OPTIONS
     configurator.add_cors_preflight_handler()
     # Default authorization : Accept anything.
@@ -106,7 +109,7 @@ def web(global_config, **local_settings):
     # Add SqlAlchemy DB
     configurator.include('.models')
     # set Hapic
-    context = TracimPyramidContext(
+    context = PyramidContext(
         configurator=configurator,
         default_error_builder=ErrorSchema(),
         debug=app_config.DEBUG,
@@ -132,6 +135,9 @@ def web(global_config, **local_settings):
     context.handle_exception(AuthenticationFailed, HTTPStatus.FORBIDDEN)
     context.handle_exception(InsufficientUserRoleInWorkspace, HTTPStatus.FORBIDDEN)  # nopep8
     context.handle_exception(InsufficientUserProfile, HTTPStatus.FORBIDDEN)
+    # caldav
+    context.handle_exception(CaldavNotAuthorized, HTTPStatus.FORBIDDEN)
+    context.handle_exception(CaldavNotAuthenticated, HTTPStatus.UNAUTHORIZED)
     # Internal server error
     context.handle_exception(OperationalError, HTTPStatus.INTERNAL_SERVER_ERROR)
     context.handle_exception(Exception, HTTPStatus.INTERNAL_SERVER_ERROR)

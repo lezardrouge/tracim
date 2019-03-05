@@ -9,9 +9,10 @@ from tracim_backend.lib.calendar.determiner import CaldavAuthorizationDeterminer
 from zope.interface import implementer
 
 from tracim_backend.app_models.contents import content_type_list
-from tracim_backend.exceptions import ContentTypeNotAllowed
+from tracim_backend.exceptions import ContentTypeNotAllowed, NotAuthenticated, \
+    CaldavNotAuthenticated
 from tracim_backend.exceptions import TracimException
-from tracim_backend.exceptions import ContentTypeNotAllowed, NotAuthorized
+from tracim_backend.exceptions import ContentTypeNotAllowed, CaldavNotAuthorized
 from tracim_backend.exceptions import InsufficientUserProfile
 from tracim_backend.exceptions import InsufficientUserRoleInWorkspace
 from tracim_backend.exceptions import UserGivenIsNotTheSameAsAuthenticated
@@ -241,7 +242,7 @@ class AndAuthorizationChecker(AuthorizationChecker):
 
 class CanAccessWorkspaceCalendarChecker(AuthorizationChecker):
     """
-    Check current user hace write access on current workspace:
+    Check current user have write access on current workspace:
         - in reading: must be reader
         - in writing: must be contributor
     """
@@ -263,6 +264,19 @@ class CanAccessWorkspaceCalendarChecker(AuthorizationChecker):
             is_reader.check(tracim_context)
 
         return True
+
+class CaldavChecker(AuthorizationChecker):
+    def __init__(self, checker) -> None:
+        self.checker = checker
+
+    def check(
+        self,
+        tracim_context: TracimContext
+    ):
+        try:
+            return self.checker.check(tracim_context)
+        except NotAuthenticated as exc:
+            raise CaldavNotAuthenticated() from exc
 
 
 # Useful Authorization Checker
@@ -293,7 +307,9 @@ can_delete_workspace = OrAuthorizationChecker(
     is_administrator,
     AndAuthorizationChecker(is_workspace_manager, is_trusted_user)
 )
-can_access_workspace_calendar = CanAccessWorkspaceCalendarChecker()
+can_access_workspace_calendar = CaldavChecker(CanAccessWorkspaceCalendarChecker())
+can_access_user_calendar = CaldavChecker(has_personal_access)
+can_access_to_calendar_list = CaldavChecker(is_user)
 # content
 can_move_content = AndAuthorizationChecker(
     is_content_manager,
@@ -333,11 +349,11 @@ def check_user_calendar_authorization(
 ) -> None:
     """
     Raise NotAuthenticated if user not authenticated and raise
-    NotAuthorized if given calendar user id not allowed
+    CaldavNotAuthorized if given calendar user id not allowed
     """
     # Note: raise NotAuthenticated if user not authenticated
     if request.current_user.user_id != user_id:
-        raise NotAuthorized(
+        raise CaldavNotAuthorized(
             'Current user is not allowed to access "{}.ics"'
             ' user calendar'.format(str(user_id)),
         )

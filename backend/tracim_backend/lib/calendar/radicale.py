@@ -33,14 +33,12 @@ class RadicaleApi(object):
         self._proxy = proxy
         self._authorization = authorization
 
-    def get_remote_user_calendar_response(self, request: 'TracimRequest') -> Response:
+    def get_remote_user_calendar_response(self, request: 'TracimRequest', user: User) -> Response:
         return self._proxy.get_response_for_request(
             request,
             # FIXME BS 2018-12-17: /radicale/ must be set because
             # raidcale will respond url with this path in PROPFIND requests
-            'user/{}.ics'.format(
-                str(self._user.user_id),
-            ),
+            'user/{}.ics'.format(user.user_id)
         )
 
     def get_remote_user_calendars_response(self, request: 'TracimRequest') -> Response:
@@ -58,9 +56,7 @@ class RadicaleApi(object):
             request,
             # FIXME BS 2018-12-17: /radicale/ must be set because
             # raidcale will respond url with this path in PROPFIND requests
-            'workspace/{}.ics'.format(
-                str(workspace.workspace_id),
-            ),
+            'workspace/{}.ics'.format(workspace.workspace_id),
         )
 
     def get_remote_workspace_calendars_response(
@@ -70,5 +66,5 @@ class RadicaleApi(object):
             request,
             # FIXME BS 2018-12-17: /radicale/ must be set because
             # raidcale will respond url with this path in PROPFIND requests
-            'workspace/{}.ics',
+            'workspace/',
         )

@@ -71,7 +71,7 @@ def web(global_config, **local_settings):
     settings = deepcopy(global_config)
     settings.update(local_settings)
     # set CFG object
-    app_config = CFG(settings)
+    app_config = CFG(settings, print_param_names=False)
     app_config.configure_filedepot()
     settings["CFG"] = app_config
     configurator = Configurator(settings=settings, autocommit=True)

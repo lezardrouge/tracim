@@ -27,6 +27,7 @@ ENV_VAR_PREFIX = "TRACIM_"
 CONFIG_LOG_TEMPLATE = (
     "CONFIG: [ {config_source: <15} | {config_name} | {config_value} | {config_name_source} ]"
 )
+CONFIG_NAME_TEMPLATE = "[ {config_name} | {env_var_name} | {config_file_name} ]"
 ID_SOURCE_ENV_VAR = "SOURCE_ENV_VAR"
 ID_SOURCE_CONFIG = "SOURCE_CONFIG"
 ID_SOURCE_DEFAULT = "SOURCE_DEFAULT"
@@ -58,7 +59,7 @@ class ConfigParam(object):
 class CFG(object):
     """Object used for easy access to config file parameters."""
 
-    def __init__(self, settings: typing.Dict[str, typing.Any]):
+    def __init__(self, settings: typing.Dict[str, typing.Any], print_param_names: bool = False):
         self.settings = settings
         self.config_naming = []  # type: typing.List[ConfigParam]
         logger.debug(self, "CONFIG_PROCESS:1: load config from settings")
@@ -68,9 +69,31 @@ class CFG(object):
         self.check_config_validity()
         logger.debug(self, "CONFIG_PROCESS:3: do post actions")
         self.do_post_check_action()
+        if print_param_names:
+            self.log_param_names()
+
+    def log_param_names(self):
+        """ log all param names"""
+        logger.info(self, "Params Names :")
+        logger.info(
+            self,
+            CONFIG_NAME_TEMPLATE.format(
+                config_name="<config_name>",
+                env_var_name="<env_var_name>",
+                config_file_name="<config_file_name>",
+            ),
+        )
+        for config in self.config_naming:
+            logger.info(
+                self,
+                CONFIG_NAME_TEMPLATE.format(
+                    config_name=config.config_name,
+                    env_var_name=config.env_var_name,
+                    config_file_name=config.config_file_name,
+                ),
+            )
 
     # INFO - G.M - 2019-04-05 - Utils Methods
-
     def _get_printed_val_value(self, value: str, secret: bool) -> str:
         if secret:
             return "<value not shown>"
